@@ -1,0 +1,5 @@
+{
+  "name": "O'zbek Korpus Tasniflagich",
+  "description": "Uzbek Text Corpus Classifier - A dictionary-based tool for categorizing Uzbek text into various domains.",
+  "requestFramePermissions": []
+}
