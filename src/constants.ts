@@ -8,64 +8,107 @@ export const CATEGORIES = {
     id: 'huquq',
     label: 'Huquq',
     color: '#5b8dee',
-    description: 'Legal, law, court related',
-    words: ["huquq", "qonun", "sud", "jinoyat", "prokuror", "advokat", "kodeks", "modda", "qaror", "farmon", "tartib", "jazo", "ayblov", "huquqbuzarlik", "konstitutsiya", "adliya", "mahkama", "sudya", "guvoh", "ariza", "shikoyat", "qamoq", "ozodlik", "mahkum", "tergov", "bayonnoma", "vakolat", "majburiyat", "bitim", "shartnoma", "fuqaro", "davlat", "hokimiyat", "ma'muriy", "fuqarolik", "jinoiy", "iqtisodiy", "hakamlik", "notarius", "guvohnoma", "pasport", "viza", "chegara", "bojxona", "soliq", "inspeksiya", "nazorat", "ijro", "byuro", "majburiy"]
+    description: 'Huquqiy, qonunchilik va sud sohasiga oid so\'zlar',
+    words: [
+      "huquq", "qonun", "sud", "jinoyat", "jarima", "jazo", "advokat", "prokuror", "konstitutsiya", "shartnoma", "soliq", "mulk", "kodeks", "farmon", "buyruq", "nizom", "arbitraj",
+      "vasiylik", "guvohnoma", "dalil", "da'vo", "deklaratsiya", "diplomatiya", "erkinlik", "huquqbuzarlik", "ijro", "imtiyoz", "inspektsiya", "isbot", "ittifoq",
+      "javobgarlik", "jinoyatchi", "korruptsiya", "mahkama", "majburiyat", "malaka", "manfaat", "maslahat", "modda", "mualliflik", "muhokama", "nazorat", "nizo", "notarius",
+      "qaror", "qasamyod", "qidiruv", "qoida", "qonuniylik", "qoralash", "reabilitatsiya", "rejim", "respublika", "ruxsatnoma", "saylov", "siyosat", "so'roq", "vakolat", "vasiyat", "adliya", "hukm", "ayblov",
+      "mahbus", "panjara", "qamoq", "qamoqxona", "tergov", "tergovchi", "guvoh", "jabrlanuvchi", "da'vogar", "javobgar", "meros", "fuqarolik", "ma'muriy", "jinoiy", "iqtisodiy", "xalqaro", "adolat", "qonuniy", "noqonuniy", "ruxsat", "taqiq"
+    ]
   },
   iqtisod: {
     id: 'iqtisod',
     label: 'Iqtisod',
     color: '#4ecf8a',
-    description: 'Economy, finance, business',
-    words: ["iqtisod", "moliya", "bank", "pul", "valyuta", "bozor", "savdo", "eksport", "import", "soliq", "budjet", "investitsiya", "tadbirkor", "biznes", "foyda", "zarar", "narx", "inflyatsiya", "kredit", "qarz", "aksiya", "birja", "daromad", "xarajat", "sanoat", "qishloq", "xizmat", "ishlab", "chiqarish", "iste'mol", "raqobat", "shartnoma", "bitim", "tovar", "mahsulot", "xizmatlar", "bojxona", "fond", "kapital", "aktiv", "passiv", "balans", "hisobot", "audit", "buxgalteriya", "to'lov", "o'tkazma", "plastik", "karta", "terminal"]
+    description: 'Iqtisodiyot, moliya va biznes sohasiga oid so\'zlar',
+    words: [
+      "iqtisod", "bozor", "savdo", "investitsiya", "bank", "moliya", "kredit", "inflyatsiya", "byudjet", "tadbirkor", "korxona", "daromad", "xarajat", "valyuta",
+      "aksiyador", "aktiv", "amortizatsiya", "auksion", "balans", "birja", "biznes", "bojxona", "debet", "defitsit", "depozit", "divident", "eksport", "fond", "foiz", "foyda",
+      "import", "indeks", "innovatsiya", "investor", "iste'mol", "ishsizlik", "jamg'arma", "kapital", "kassa", "kompaniya", "kontrakt", "kurs", "lizing", "logistika",
+      "mahsulot", "marketing", "mablag'", "menejment", "mijoz", "monopoliya", "narx", "naqd", "obligatsiya", "omonat", "patent", "prognoz", "pul", "qiymat", "sarmoya", "tijorat", "tovar", "tranzaksiya", "zarar",
+      "iqtisodiyot", "moliyaviy", "iqtisodchi", "hisob", "hisobchi", "audit", "auditor", "soliqchi", "boj", "sanoat", "klaster", "tadbirkorlik", "fermer", "dehqonchilik", "chorvachilik"
+    ]
   },
   jamiyat: {
     id: 'jamiyat',
     label: 'Jamiyat',
     color: '#f07b40',
-    description: 'Society, culture, family',
-    words: ["jamiyat", "madaniyat", "oila", "mahalla", "yoshlar", "xotin-qizlar", "an'ana", "qadriyat", "bayram", "san'at", "teatr", "kino", "musiqa", "adabiyot", "til", "tarix", "ma'naviyat", "ma'rifat", "xayriya", "ko'mak", "yordam", "birdamlik", "tinchlik", "barqarorlik", "aholi", "demografiya", "din", "e'tiqod", "urf-odat", "meros", "millat", "xalq", "vatan", "mustaqillik", "erkinlik", "tenglik", "adolat", "inson", "shaxs", "bolalar", "qariyalar", "nogironlar", "ijtimoiy", "himoya", "nafaqa", "pensiya", "ishsizlik", "bandlik"]
+    description: 'Ijtimoiy, madaniy va oilaviy masalalarga oid so\'zlar',
+    words: [
+      "jamiyat", "aholi", "oila", "madaniyat", "an'ana", "urf", "qadriyat", "mahalla", "jamoat", "ijtimoiy", "yoshlar", "ayollar", "adolat", "ahloq", "aloqa", "andisha",
+      "avlod", "axborot", "baxt", "bayram", "birdamlik", "bolalar", "burch", "davlat", "din", "do'stlik", "e'tiqod", "ezgulik", "falsafa", "farovonlik", "farzand", "fuqaro",
+      "g'oya", "hayot", "himoya", "hurmat", "ibrat", "idrok", "ijod", "iymon", "inson", "ishonch", "ma'naviyat", "ma'rifat", "maqsad", "mas'uliyat", "mehnat", "mehr",
+      "millat", "muammo", "muhabbat", "muhit", "munosabat", "namuna", "niyat", "obro'", "odam", "odob", "oilaviy", "ozodlik", "vatan", "vijdon", "xalq", "yaxshilik",
+      "siyosiy", "madaniy", "ma'naviy", "ma'rifiy", "diniy", "milliy", "hamkorlik", "totuvlik", "tinchlik", "barqarorlik", "taraqqiyot", "islohot", "yangilanish", "o'zlik", "g'urur", "iftixor"
+    ]
   },
   talim: {
     id: 'talim',
     label: 'Ta\'lim',
     color: '#b97cf7',
-    description: 'Education, science',
-    words: ["ta'lim", "fan", "maktab", "universitet", "institut", "kollej", "litsey", "o'quvchi", "talaba", "o'qituvchi", "professor", "dars", "kitob", "darslik", "bilim", "malaka", "ko'nikma", "tadqiqot", "laboratoriya", "imtihon", "test", "baho", "diplom", "sertifikat", "akademiya", "magistratura", "bakalavriat", "pedagogika", "psixologiya", "metodika", "o'qish", "yozish", "savodxonlik", "ma'lumot", "oliy", "o'rta", "maxsus", "maktabgacha", "tarbiya", "ustoz", "shogird", "kurs", "seminar", "konferensiya", "maqola", "dissertatsiya"]
+    description: 'Ta\'lim, fan va o\'quv jarayoniga oid so\'zlar',
+    words: [
+      "talim", "ta'lim", "maktab", "universitet", "litsey", "talaba", "o'quvchi", "o'qituvchi", "dars", "imtihon", "diplom", "ilm", "fan", "pedagog", "akademiya",
+      "amaliyot", "auditoriya", "bilim", "bilimdon", "bosqich", "darslik", "daraja", "dastur", "didaktika", "dissertatsiya", "doktorant", "fakultet", "fikr",
+      "institut", "intellekt", "iqtidor", "izlanish", "jurnal", "kafedra", "kitob", "konferentsiya", "ko'nikma", "laboratoriya", "loyiha", "lug'at", "ma'lumot",
+      "ma'ruza", "magistr", "malaka", "manba", "maqola", "metodika", "muallif", "muallim", "nazariya", "natija", "pedagogika", "psixologiya", "qobiliyat", "seminar", "tahsil", "tarbiya", "ustoz", "yutuq", "ziyo",
+      "o'quv", "o'qish", "o'rganish", "o'rgatish", "bakalavriat", "magistratura", "doktorantura", "aspirantura", "repetitor", "sinf", "parta", "doska", "daftar", "ruchka", "qalam"
+    ]
   },
   texnologiyalar: {
     id: 'texnologiyalar',
     label: 'Texnologiyalar',
     color: '#38c9d4',
-    description: 'Technology, IT, digital',
-    words: ["texnologiya", "internet", "kompyuter", "dastur", "sayt", "mobil", "aloqa", "raqamli", "innovatsiya", "robot", "sun'iy", "intellekt", "tarmoq", "server", "ma'lumot", "baza", "xavfsizlik", "kiber", "smartfon", "gadjet", "dasturlash", "kod", "algoritmlar", "platforma", "bulutli", "tizim", "qurilma", "elektronika", "avtomatlashtirish", "muhandislik", "it", "ayti", "veb", "ilova", "soft", "apparat", "protsessor", "xotira", "ekran", "displey", "klaviatura", "sichqoncha", "printer", "skaner", "kamera", "wi-fi", "bluetooth"]
+    description: 'Texnologiya, IT va raqamli dunyoga oid so\'zlar',
+    words: [
+      "texnologiya", "kompyuter", "dastur", "internet", "raqamli", "ilova", "algoritm", "server", "dasturchi", "mobil", "gadjet", "platforma", "avtomatlashtirish",
+      "axborot", "bulutli", "chip", "dasturlash", "devays", "domen", "elektron", "elektronika", "energiya", "fayl", "geolokatsiya", "grafika", "haker", "hisoblash",
+      "hosting", "identifikatsiya", "informatika", "innovatsiya", "interfeys", "it-park", "kabel", "kamera", "kiberxavfsizlik", "kod", "kommutator", "kontent",
+      "kriptografiya", "loyiha", "mexanizm", "modernizatsiya", "monitor", "multimedia", "nanotexnologiya", "navigatsiya", "noutbuk", "onlayn", "operatsion", "parol",
+      "planshet", "printer", "protsessor", "protokol", "robot", "router", "sayt", "sensor", "signal", "smartfon", "tarmoq", "texnika", "uskuna", "video", "virtual", "wi-fi", "xotira",
+      "blokcheyn", "kriptovalyuta", "antivirus", "brauzer", "portal", "giperhavola", "link", "yuklab", "o'rnatish", "sozlash", "yangilash", "neyron"
+    ]
   },
   sport: {
     id: 'sport',
     label: 'Sport',
     color: '#f2545b',
-    description: 'Sports',
-    words: ["sport", "futbol", "boks", "kurash", "tennis", "shaxmat", "olimpiada", "chempionat", "musobaqa", "jamoa", "murabbiy", "hakam", "stadion", "maydon", "g'alaba", "mag'lubiyat", "rekord", "medal", "kubok", "turnir", "gimnastika", "suzish", "yengil", "atletika", "og'ir", "basketbol", "voleybol", "regbi", "dzyudo", "karate", "taekvondo", "suzish", "velosport", "shashka", "bilard", "ot", "poyga", "avtopoyga", "velosiped", "to'p", "raketka", "setka", "darvoza", "gol", "ochko"]
+    description: 'Sport va jismoniy tarbiyaga oid so\'zlar',
+    words: [
+      "sport","futbol","musobaqa","chempionat","turnir","kubok","stadion","gol","o'yin","uchrashuv","jamoa","trener","murabbiy","g'alaba","mag'lubiyat","ochko","neftchi","paxtakor","istiqlol","andijon","superkubok","darvozabon","hujumchi","himoyachi","zarba","penalti","taym","muxlis","sardor","aut","medal","olimpiya","kurash","boks","velosiped","belashuv","seriyasi","maydon","hakam","final","yarimfinal","chorakfinal","guruh","ochilish","yopilish","olimpiada","paralimpiada","atletika","suzish","tennis","voleybol","basketbol","shaxmat","shashka","regbi","beysbol","xokkey","bokschi","kurashchi","suzuvchi","yuguruvchi","velosport","poyga","ralli","transfer","klub","federatsiya","uchradi","durang","g'olib","chempion",
+      "rekord", "natija", "ko'rsatkich", "mashg'ulot", "fitnes", "gimnastika", "dzyudo", "sambo", "karate", "taekvondo", "qilichbozlik", "marafon", "estafeta"
+    ]
   },
   boshqa: {
     id: 'boshqa',
     label: 'Boshqa',
     color: '#515468',
-    description: 'Other categories',
+    description: 'Boshqa turli xil so\'zlar',
     words: []
   }
 };
 
 export const EXAMPLES = [
   {
-    title: "Namuna 1",
-    text: "O'zbekiston Respublikasi Konstitutsiyasi qonun ustuvorligini ta'minlaydi. Sud tizimi mustaqilligi huquqiy davlatning asosiy belgisidir. Jinoyat kodeksi va ma'muriy javobgarlik to'g'risidagi kodekslar jamiyatda tartibni saqlashga xizmat qiladi."
+    title: "Lotincha",
+    text: "Sud qarori bilan ayblanuvchiga nisbatan jazo tayinlandi. Advokat shartnoma moddalarini tahlil qilib, konstitutsiya asosida himoya nutqini so'zladi."
   },
   {
-    title: "Namuna 2",
-    text: "Raqamli iqtisodiyot sharoitida texnologiyalar va innovatsiyalar muhim rol o'ynaydi. Sun'iy intellekt va blokcheyn tizimlari bank moliya sohasini tubdan o'zgartirmoqda. Dasturlash tillarini o'rganish yoshlar uchun yangi imkoniyatlar ochadi."
+    title: "Kirillcha",
+    text: "Нефтчи – Пахтакор турнирнинг марказий ўйини. Жамоалар кучли ўйин кўрсатмоқда. Нефтчи мағлубиятга учради."
   },
   {
-    title: "Namuna 3",
-    text: "Sport bilan shug'ullanish sog'lom turmush tarzining asosi hisoblanadi. Futbol, boks va kurash bo'yicha o'zbek sportchilari xalqaro musobaqalarda yuqori natijalarni qo'lga kiritmoqdalar. Olimpiada o'yinlarida medallar soni ortib bormoqda."
+    title: "Aralash",
+    text: "Dasturchilar yangi mobil ilova va kiberxavfsizlik protokoli ustida ishlamoqda. Sun'iy intellekt va bulutli texnologiyalar raqamli dunyoni o'zgartirmoqda. Бу соҳада инновациялар жуда муҳим."
+  },
+  {
+    title: "Iqtisod",
+    text: "Марказий банк инфляция даражасини пасайтириш учун янги кредит сиёсатини эълон қилди. Bozor iqtisodiyoti sharoitida investitsiya va eksport hajmi oshmoqda."
+  },
+  {
+    title: "Ta'lim",
+    text: "Universitet talabalari imtihon topshirishga tayyorgarlik ko'rmoqda. Янги дарсликлар ва методика таъlim sifatini oshirishga xizmat qiladi."
   }
 ];
+

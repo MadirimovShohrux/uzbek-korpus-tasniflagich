@@ -48,12 +48,11 @@ export default function App() {
 
   // Tokenization logic
   const tokenize = (text: string) => {
-    // Handle Uzbek apostrophes ' and ’
-    // Split by non-word characters but keep internal apostrophes
-    return text
-      .toLowerCase()
-      .split(/[^a-z'’ʻ‘а-яёқғҳ]/i)
-      .filter(word => word.length > 1);
+    // Handle Uzbek Latin and Cyrillic characters
+    const matches = text.toLowerCase().match(/[a-z\u02BC\u2018\u2019\u02BB'ğşçıöü\u0400-\u04FF]+/gu) || [];
+    return matches
+      .map(t => t.replace(/^['\u02BC\u2018\u2019`]+|['\u02BC\u2018\u2019`]+$/g, ''))
+      .filter(Boolean);
   };
 
   const classifyText = () => {
@@ -61,11 +60,32 @@ export default function App() {
     
     setIsClassifying(true);
     
+    // Transliteration map for normalization
+    const cyrillicToLatin: Record<string, string> = {
+      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'j', 'з': 'z',
+      'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r',
+      'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'x', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'ъ': '',
+      'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya', 'ў': 'o', 'қ': 'q', 'ғ': 'g', 'ҳ': 'h'
+    };
+
+    const normalize = (w: string) => {
+      let res = w.toLowerCase();
+      // Transliterate Cyrillic to Latin base
+      res = res.split('').map(char => cyrillicToLatin[char] || char).join('');
+      
+      return res
+        .replace(/['\u02BC\u2018\u2019\u02BB`]/g, '')
+        .replace(/ğ/g, 'g')
+        .replace(/ş/g, 's')
+        .replace(/ç/g, 'c')
+        .replace(/ö/g, 'o')
+        .replace(/ü/g, 'u')
+        .replace(/ı/g, 'i');
+    };
+
     // Simulate processing delay for "premium" feel
     setTimeout(() => {
       const tokens = tokenize(inputText);
-      const wordCounts: Record<string, number> = {};
-      const wordCategories: Record<string, CategoryKey> = {};
       
       const categoryStats: Record<CategoryKey, number> = {
         huquq: 0,
@@ -77,35 +97,67 @@ export default function App() {
         boshqa: 0
       };
 
-      tokens.forEach(token => {
-        wordCounts[token] = (wordCounts[token] || 0) + 1;
+      const wordList: WordResult[] = tokens.map((word, index) => {
+        let foundCat: CategoryKey = 'boshqa';
         
-        if (!wordCategories[token]) {
-          let found = false;
+        // Advanced suffix stripping for Uzbek
+        const suffixes = ['ning', 'dan', 'lar', 'da', 'ga', 'ni', 'si', 'i', 'u', 'li', 'siz', 'miy', 'iy', 'chi', 'lik'];
+        
+        const checkWord = (w: string) => {
+          const normalizedW = normalize(w);
           for (const [catKey, catData] of Object.entries(CATEGORIES)) {
             if (catKey === 'boshqa') continue;
-            if (catData.words.includes(token)) {
-              wordCategories[token] = catKey as CategoryKey;
-              found = true;
+            // Check exact match or normalized match
+            const isMatch = catData.words.some(dictWord => 
+              dictWord.toLowerCase() === w.toLowerCase() || 
+              normalize(dictWord) === normalizedW
+            );
+            if (isMatch) return catKey as CategoryKey;
+          }
+          return null;
+        };
+
+        // 1. Try exact/normalized match
+        let cat = checkWord(word);
+        
+        // 2. Try stripping suffixes if no match
+        if (!cat) {
+          const normalizedWord = normalize(word);
+          const sortedSuffixes = [...suffixes].sort((a, b) => b.length - a.length);
+          for (const suffix of sortedSuffixes) {
+            if (normalizedWord.endsWith(suffix) && normalizedWord.length > suffix.length + 2) {
+              const stripped = normalizedWord.slice(0, -suffix.length);
+              cat = checkWord(stripped);
+              if (cat) break;
+            }
+          }
+        }
+
+        // 3. Fallback to prefix matching for longer words
+        if (!cat) {
+          const normalizedWord = normalize(word);
+          for (const [catKey, catData] of Object.entries(CATEGORIES)) {
+            if (catKey === 'boshqa') continue;
+            const isMatch = catData.words.some(dictWord => {
+              const normalizedDictWord = normalize(dictWord);
+              return normalizedDictWord.length >= 4 && normalizedWord.startsWith(normalizedDictWord);
+            });
+            if (isMatch) {
+              cat = catKey as CategoryKey;
               break;
             }
           }
-          if (!found) {
-            wordCategories[token] = 'boshqa';
-          }
         }
-      });
 
-      // Calculate stats based on total occurrences
-      tokens.forEach(token => {
-        categoryStats[wordCategories[token]]++;
+        foundCat = cat || 'boshqa';
+        
+        categoryStats[foundCat]++;
+        return {
+          word,
+          category: foundCat,
+          count: index + 1
+        };
       });
-
-      const wordList: WordResult[] = Object.keys(wordCounts).map(word => ({
-        word,
-        category: wordCategories[word],
-        count: wordCounts[word]
-      })).sort((a, b) => b.count - a.count);
 
       setResults({
         totalWords: tokens.length,
@@ -145,7 +197,7 @@ export default function App() {
     { label: 'Jami so\'zlar', value: results?.totalWords || 0, icon: Hash },
     { label: 'Tasnif etilgan', value: results?.classifiedCount || 0, icon: CheckCircle2 },
     { label: 'Boshqa', value: results?.otherCount || 0, icon: HelpCircle },
-    { label: 'Kategoriyalar', value: Object.keys(CATEGORIES).length, icon: Layers },
+    { label: 'Kategoriyalar', value: results ? new Set(results.wordList.filter(r => r.category !== 'boshqa').map(r => r.category)).size : 0, icon: Layers },
   ];
 
   const renderJson = (obj: any) => {
@@ -172,35 +224,36 @@ export default function App() {
   return (
     <div className="min-h-screen max-w-5xl mx-auto px-4 py-12 flex flex-col gap-12">
       {/* Header */}
-      <header className="flex flex-col items-center text-center gap-4">
+      <header className="flex flex-col items-center text-center gap-6">
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-20 h-20 relative flex items-center justify-center"
+          className="w-36 h-36 relative flex items-center justify-center gold-glow rounded-[2.5rem] mb-2"
         >
-          <div className="absolute inset-0 border-2 border-gold rotate-45 rounded-lg gold-glow" />
-          <span className="text-3xl font-black text-gold z-10">UZ</span>
+          <div className="absolute inset-0 border-4 border-gold rounded-[2.5rem] bg-gold/10" />
+          <span className="text-7xl font-black text-gold z-10 drop-shadow-[0_0_20px_rgba(232,197,109,0.7)]">UZ</span>
         </motion.div>
-        <div className="flex flex-col gap-1">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white">
             O'zbek <span className="text-gold">Korpus</span> Tasniflagich
           </h1>
-          <p className="text-gray-500 font-medium uppercase tracking-widest text-sm">
-            Uzbek Text Corpus Classifier · Dictionary-based
+          <p className="text-gray-400 font-medium tracking-wide text-sm md:text-base max-w-2xl mx-auto">
+            O'zbek matnlarini kategoriyalarga ajratuvchi lug'at asosidagi tasniflagich
           </p>
         </div>
       </header>
 
       {/* Legend */}
-      <section className="flex flex-wrap justify-center gap-3">
+      <section className="flex flex-wrap justify-center gap-2">
         {Object.values(CATEGORIES).map((cat) => (
-          <div 
+          <motion.div 
             key={cat.id}
-            className="flex items-center gap-2 px-4 py-2 rounded-full glass text-xs font-semibold tracking-wide"
+            whileHover={{ y: -2, scale: 1.05 }}
+            className="flex items-center gap-2 px-4 py-2 rounded-full glass text-[10px] font-black uppercase tracking-widest border border-white/10 cursor-default hover:border-gold/30 transition-colors"
           >
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-            {cat.label}
-          </div>
+            <div className="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]" style={{ backgroundColor: cat.color, color: cat.color }} />
+            <span className="text-gray-400 group-hover:text-white">{cat.label}</span>
+          </motion.div>
         ))}
       </section>
 
@@ -210,14 +263,14 @@ export default function App() {
         <div className="flex gap-2 p-1 rounded-xl bg-surface-1 w-fit mx-auto border border-white/5">
           <button 
             onClick={() => setActiveTab('text')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'text' ? 'bg-gold text-bg-dark shadow-lg' : 'text-gray-500 hover:text-white'}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'text' ? 'bg-gold/10 border border-gold text-gold' : 'text-gray-500 hover:text-white border border-transparent'}`}
           >
             <FileText size={16} />
             ✎ Matn kiriting
           </button>
           <button 
             onClick={() => setActiveTab('file')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'file' ? 'bg-gold text-bg-dark shadow-lg' : 'text-gray-500 hover:text-white'}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'file' ? 'bg-gold/10 border border-gold text-gold' : 'text-gray-500 hover:text-white border border-transparent'}`}
           >
             <Upload size={16} />
             ⊞ Fayl yuklang
@@ -225,7 +278,7 @@ export default function App() {
         </div>
 
         {/* Input Card */}
-        <div className="glass rounded-2xl overflow-hidden shadow-2xl border-white/5">
+        <div className="glass rounded-2xl overflow-hidden shadow-2xl border-white/10">
           <AnimatePresence mode="wait">
             {activeTab === 'text' ? (
               <motion.div 
@@ -238,7 +291,7 @@ export default function App() {
                 <textarea 
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Matnni shu yerga kiriting yoki namunani tanlang..."
+                  placeholder="Matnni shu yerga kiriting..."
                   className="w-full h-64 p-8 bg-transparent outline-none font-mono text-lg resize-none placeholder:text-gray-700 text-gold/90"
                 />
                 <div className="flex flex-wrap items-center justify-between p-4 bg-white/5 border-t border-white/5 gap-4">
@@ -247,22 +300,21 @@ export default function App() {
                       <button 
                         key={idx}
                         onClick={() => setInputText(ex.text)}
-                        className="px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 text-xs font-bold text-gray-400 hover:text-gold transition-colors"
+                        className="px-3 py-1.5 rounded-md bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gold transition-colors"
                       >
                         {ex.title}
                       </button>
                     ))}
                     <button 
                       onClick={() => setInputText('')}
-                      className="px-3 py-1.5 rounded-md bg-red-500/10 hover:bg-red-500/20 text-xs font-bold text-red-400 transition-colors flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-md bg-red-500/10 hover:bg-red-500/20 text-[10px] font-black uppercase tracking-widest text-red-400 transition-colors flex items-center gap-1"
                     >
                       <Trash2 size={12} />
                       Tozalash
                     </button>
                   </div>
                   <div className="flex gap-4 text-[10px] font-mono text-gray-500 uppercase tracking-tighter">
-                    <span>Belgilar: <b className="text-gold">{inputText.length}</b></span>
-                    <span>So'zlar: <b className="text-gold">{tokenize(inputText).length}</b></span>
+                    <span>{inputText.length} belgi · {tokenize(inputText).length} so'z</span>
                   </div>
                 </div>
               </motion.div>
@@ -276,6 +328,18 @@ export default function App() {
               >
                 <div 
                   onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file && file.type === 'text/plain') {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        setInputText(event.target?.result as string);
+                      };
+                      reader.readAsText(file);
+                    }
+                  }}
                   className="border-2 border-dashed border-white/10 rounded-xl p-12 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-gold/50 hover:bg-gold/5 transition-all group"
                 >
                   <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -283,7 +347,7 @@ export default function App() {
                   </div>
                   <div className="text-center">
                     <p className="text-white font-bold text-lg">Faylni tanlang yoki shu yerga tashlang</p>
-                    <p className="text-gray-500 text-sm">Faqat .txt formatidagi UTF-8 kodirovkali fayllar</p>
+                    <p className="text-gray-500 text-sm">.txt UTF-8 fayllari qo'llab-quvvatlanadi</p>
                   </div>
                   <input 
                     type="file" 
@@ -296,7 +360,7 @@ export default function App() {
                 {inputText && (
                   <div className="mt-6 p-4 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <FileText className="text-green-400" />
+                      <CheckCircle2 className="text-green-400" size={18} />
                       <span className="text-sm font-medium text-green-400">Fayl muvaffaqiyatli yuklandi</span>
                     </div>
                     <button onClick={() => setInputText('')} className="text-gray-500 hover:text-white">
@@ -313,16 +377,19 @@ export default function App() {
         <button 
           onClick={classifyText}
           disabled={!inputText.trim() || isClassifying}
-          className="w-full py-6 rounded-2xl bg-gold text-bg-dark font-black text-xl uppercase tracking-widest flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(232,197,109,0.3)] hover:shadow-[0_0_50px_rgba(232,197,109,0.5)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed group"
+          className="w-full py-7 rounded-2xl bg-gold text-bg-dark font-black text-2xl uppercase tracking-[0.25em] flex items-center justify-center gap-4 shadow-[0_0_30px_rgba(232,197,109,0.3)] hover:shadow-[0_0_70px_rgba(232,197,109,0.6)] hover:scale-[1.02] transition-all duration-500 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed group relative overflow-hidden border border-white/10"
         >
-          {isClassifying ? (
-            <div className="w-6 h-6 border-4 border-bg-dark/20 border-t-bg-dark rounded-full animate-spin" />
-          ) : (
-            <>
-              <Play fill="currentColor" size={24} className="group-hover:translate-x-1 transition-transform" />
-              Tasnifla — Classify
-            </>
-          )}
+          <div className="absolute inset-0 bg-white/30 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+          <div className="relative z-10 flex items-center gap-4">
+            {isClassifying ? (
+              <div className="w-8 h-8 border-4 border-bg-dark/20 border-t-bg-dark rounded-full animate-spin" />
+            ) : (
+              <>
+                <Play fill="currentColor" size={28} className="group-hover:translate-x-2 transition-transform duration-300" />
+                Tasnifla — Classify
+              </>
+            )}
+          </div>
         </button>
       </main>
 
@@ -343,11 +410,11 @@ export default function App() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.1 }}
-                  className="glass p-6 rounded-2xl flex flex-col gap-2"
+                  className="glass p-6 rounded-2xl flex flex-col gap-2 border-white/10"
                 >
                   <div className="flex items-center justify-between text-gray-500">
-                    <span className="text-xs font-bold uppercase tracking-wider">{stat.label}</span>
-                    <stat.icon size={16} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">{stat.label}</span>
+                    <stat.icon size={14} />
                   </div>
                   <span className="text-4xl font-black text-gold">{stat.value}</span>
                 </motion.div>
@@ -355,10 +422,10 @@ export default function App() {
             </div>
 
             {/* Distribution Chart */}
-            <div className="glass p-8 rounded-2xl flex flex-col gap-8">
+            <div className="glass p-8 rounded-2xl flex flex-col gap-8 border-white/10">
               <div className="flex items-center gap-3">
-                <BarChart3 className="text-gold" />
-                <h2 className="text-xl font-bold text-white">Kategoriyalar taqsimoti</h2>
+                <BarChart3 className="text-gold" size={20} />
+                <h2 className="text-xl font-bold text-white uppercase tracking-tight">Kategoriyalar taqsimoti</h2>
               </div>
               <div className="flex flex-col gap-6">
                 {Object.entries(CATEGORIES).map(([key, cat], idx) => {
@@ -366,15 +433,15 @@ export default function App() {
                   const percentage = results.totalWords > 0 ? (count / results.totalWords) * 100 : 0;
                   return (
                     <div key={key} className="flex flex-col gap-2">
-                      <div className="flex justify-between text-xs font-bold uppercase tracking-wide">
+                      <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
                         <span className="text-gray-400">{cat.label}</span>
                         <span className="text-gold">{count} so'z ({percentage.toFixed(1)}%)</span>
                       </div>
-                      <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
                           animate={{ width: `${percentage}%` }}
-                          transition={{ duration: 1, delay: idx * 0.1, ease: "easeOut" }}
+                          transition={{ duration: 1.2, delay: idx * 0.1, ease: [0.22, 1, 0.36, 1] }}
                           className="h-full rounded-full"
                           style={{ backgroundColor: cat.color }}
                         />
@@ -388,54 +455,61 @@ export default function App() {
             {/* Word Table */}
             <div className="flex flex-col gap-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <h2 className="text-xl font-bold text-white">So'zlar ro'yxati</h2>
+                <h2 className="text-xl font-bold text-white uppercase tracking-tight">So'zlar ro'yxati</h2>
                 <div className="flex flex-wrap gap-2">
                   <button 
                     onClick={() => setActiveFilter('all')}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeFilter === 'all' ? 'bg-white text-bg-dark' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter === 'all' ? 'bg-gold text-bg-dark' : 'bg-white/5 text-gray-500 hover:text-white'}`}
                   >
-                    Hammasi
+                    Hammasi ({results.totalWords})
                   </button>
-                  {Object.values(CATEGORIES).map(cat => (
-                    <button 
-                      key={cat.id}
-                      onClick={() => setActiveFilter(cat.id as CategoryKey)}
-                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border border-transparent ${activeFilter === cat.id ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 text-gray-500 hover:text-white'}`}
-                      style={activeFilter === cat.id ? { color: cat.color, borderColor: `${cat.color}40` } : {}}
-                    >
-                      {cat.label}
-                    </button>
-                  ))}
+                  {Object.values(CATEGORIES).map(cat => {
+                    const count = results.categoryStats[cat.id as CategoryKey] || 0;
+                    if (count === 0 && cat.id !== 'boshqa') return null;
+                    return (
+                      <button 
+                        key={cat.id}
+                        onClick={() => setActiveFilter(cat.id as CategoryKey)}
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border border-transparent ${activeFilter === cat.id ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+                        style={activeFilter === cat.id ? { color: cat.color, borderColor: `${cat.color}40` } : {}}
+                      >
+                        {cat.label} ({count})
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="glass rounded-2xl overflow-hidden">
+              <div className="glass rounded-2xl overflow-hidden border-white/10">
                 <div className="max-h-[500px] overflow-y-auto scrollbar-hide">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-surface-2 z-10">
+                    <thead className="sticky top-0 bg-surface-2/80 backdrop-blur-md z-10">
                       <tr className="border-b border-white/5">
-                        <th className="px-8 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest">So'z</th>
-                        <th className="px-8 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest">Kategoriya</th>
-                        <th className="px-8 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest text-right">#</th>
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">So'z</th>
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Kategoriya</th>
+                        <th className="px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">#</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredWordList.map((item, idx) => (
                         <motion.tr 
-                          key={item.word}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.01 }}
+                          key={`${item.word}-${idx}`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(idx * 0.01, 0.5) }}
                           className="border-b border-white/5 hover:bg-white/5 transition-colors group"
                         >
                           <td className="px-8 py-4 font-mono text-gold/80 group-hover:text-gold">{item.word}</td>
                           <td className="px-8 py-4">
-                            <span 
-                              className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter"
-                              style={{ backgroundColor: `${CATEGORIES[item.category].color}20`, color: CATEGORIES[item.category].color }}
-                            >
-                              {CATEGORIES[item.category].label}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: CATEGORIES[item.category].color }} />
+                              <span 
+                                className="text-[10px] font-black uppercase tracking-widest"
+                                style={{ color: CATEGORIES[item.category].color }}
+                              >
+                                {CATEGORIES[item.category].label}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-8 py-4 text-right font-mono text-gray-500">{item.count}</td>
                         </motion.tr>
@@ -457,15 +531,15 @@ export default function App() {
             <div className="flex flex-col gap-4">
               <button 
                 onClick={() => setShowJson(!showJson)}
-                className="flex items-center justify-between w-full p-6 glass rounded-2xl hover:bg-white/10 transition-all group"
+                className="flex items-center justify-between w-full p-6 glass rounded-2xl hover:bg-white/10 transition-all group border-white/10"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
                     <Hash className="text-cyan-400" size={20} />
                   </div>
                   <div className="text-left">
-                    <p className="text-white font-bold">JSON Ma'lumotlar</p>
-                    <p className="text-gray-500 text-xs uppercase tracking-widest">Raw classification data output</p>
+                    <p className="text-white font-bold uppercase tracking-tight">{"{ }"} JSON Natija</p>
+                    <p className="text-gray-500 text-[10px] uppercase tracking-widest">Raw classification data output</p>
                   </div>
                 </div>
                 {showJson ? <ChevronUp className="text-gray-500" /> : <ChevronDown className="text-gray-500" />}
@@ -479,7 +553,7 @@ export default function App() {
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="glass p-8 rounded-2xl bg-black/40 relative">
+                    <div className="glass p-8 rounded-2xl bg-black/40 relative border-white/10">
                       <button 
                         onClick={() => {
                           const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
@@ -505,11 +579,8 @@ export default function App() {
 
             {/* Footer */}
             <footer className="py-12 text-center flex flex-col gap-2">
-              <p className="text-gray-600 text-xs font-bold uppercase tracking-[0.3em]">
-                O'zbek Korpus Tasniflagich © 2026
-              </p>
-              <p className="text-gray-700 text-[10px] font-medium">
-                Premium Text Analysis Engine · Built with React & Tailwind
+              <p className="text-gray-600 text-[10px] font-black uppercase tracking-[0.5em]">
+                O'zbek Korpus Tasniflagich © 2026 • Dictionary-based Classifier
               </p>
             </footer>
           </motion.section>
@@ -517,4 +588,5 @@ export default function App() {
       </AnimatePresence>
     </div>
   );
+
 }
